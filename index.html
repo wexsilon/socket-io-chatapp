@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get-Started SocketIO</title>
+</head>
+<body>
+    <form id="form-connect">
+        <input id="input-username" type="text" placeholder="username">
+        <input type="submit" value="CONNECT">
+    </form>
+    
+
+    <ul id="messages" hidden></ul>
+    <form id="form-message" hidden>
+        <input id="input-message" type="text" autocomplete="off">
+        <input type="submit" value="SEND">
+    </form>
+    <script src="/node_modules/socket.io/client-dist/socket.io.min.js"></script>
+    <script>
+        const socket = io();
+        
+        const formConnect = document.getElementById('form-connect');
+        const inputConnect = document.getElementById('input-username');
+        const listMessages = document.getElementById('messages');
+        const formMessage = document.getElementById('form-message'); 
+
+        let userName = '';
+        
+        formConnect.addEventListener('submit', function (e) {
+            e.preventDefault();
+            if (inputConnect.value) {
+                socket.emit('connect-client', { username: inputConnect.value });
+            }
+        });
+        socket.on('ok-username', function(messages) {
+            formConnect.hidden = true;
+            formMessage.hidden = false;
+            listMessages.hidden = false;
+            userName = inputConnect.value;
+
+            messages.forEach(message => {
+                addNewMessage(message);
+            });
+            const showUsername = document.createElement('h1');
+            showUsername.textContent = userName;
+            document.body.insertBefore(document.createElement('hr'), document.body.firstChild);
+            document.body.insertBefore(showUsername, document.body.firstChild);
+            
+
+        });
+        socket.on('exist-username', function() {
+            alert('Username Exist');
+        });
+
+
+
+        function addNewMessage(arg) {
+            const newMessage = document.createElement('li');
+            newMessage.textContent = arg.userName + ': ' + arg.message;
+            listMessages.appendChild(newMessage);            
+        }
+
+        formMessage.addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (inputMessage.value) {
+                const res = { userName, message: inputMessage.value };
+                socket.emit('send-message', res);
+                addNewMessage(res);
+                inputMessage.value = '';
+            }
+        });
+
+        socket.on('recv-message', function(arg) {
+            addNewMessage(arg);
+        });
+
+    </script> 
+</body>
+</html>
